@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,minimum-scale=1,user-scalable=0,maximum-scale=1"
+    />
+    <!-- 请勿直接使用此reset.css -->
+    <link rel="stylesheet" href="./ossweb-img/css/reset.css" />
+    <link rel="stylesheet" href="./ossweb-img/css/main.css" />
+    <title>核对列表</title>
+    <script>
+      // 是否是移动端
+      var wid = window.screen.width;
+      if (wid < 800) {
+        var _cssText = document.querySelector("html").style.cssText;
+        document.querySelector("html").style.cssText =
+          _cssText + "font-size:" + (100 * wid) / 414 + "px !important";
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app" @click="showDel(-1)">
+      <header :class="['menu-setting',{'open-menu':menu}]">
+        <!-- 设置项 -->
+        <div :class="['setting',menu?'menu-ani':'']" @click="openMenu()"></div>
+        <!-- 菜单 -->
+        <div class="menu-box">
+          <ul>
+            <li>
+              <div class="set-prop"></div>
+              <div class="switch"></div>
+            </li>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+        </div>
+      </header>
+      <div class="show-ani"></div>
+      <!-- 请输入地址 -->
+      <div class="start-check">
+        <div class="start-check-input">
+          <input
+            :class="{'red':errTips}"
+            type="text"
+            v-model="inputValue"
+            placeholder="请输入URL地址"
+            @keyup.enter="inputCheck()"
+          />
+        </div>
+        <div class="btn-op">
+          <a class="btn-start-check" @click="clearInput()">清空</a>
+          <a class="btn-start-check" @click="inputCheck()">开始检测</a>
+        </div>
+      </div>
+      <!-- 开始校验 -->
+      <transition name="fade">
+        <div v-show="haveUrl" class="checking">
+          <!-- 后台校验部分 -->
+          <section class="model1">
+            <!-- head -->
+            <div
+              class="card-box"
+              @click="showCard(0)"
+              v-for="(item,index) in cardList"
+              :key="index"
+            >
+              <div class="card-up">
+                <div class="check-prop">
+                  <p>{{index + 1}}、{{item.proptery1}}</p>
+                </div>
+                <div class="check-status">
+                  <!-- 状态 1、通过2、未通过3、加载中4、数量5、校验失败 -->
+                  <div v-if="item.statusType === 1" class="status-passed"></div>
+                  <div
+                    v-else-if="item.statusType === 2"
+                    class="status-notpass"
+                  ></div>
+                  <div
+                    v-else-if="item.statusType === 3"
+                    class="status-loading"
+                  ></div>
+                  <div v-else-if="item.statusType === 4" class="status-numtips">
+                    <span>{{ 4 }}个</span>
+                  </div>
+                  <div v-else class="status-fail"></div>
+                </div>
+              </div>
+              <div class="card-dn">
+                <div class="title-info prop-info">
+                  <p>标题: <span>标签列表</span></p>
+                </div>
+                <div class="desc-info prop-info">
+                  <p>描述: <span>标签列表标签列表</span></p>
+                </div>
+                <div class="keyw-info prop-info">
+                  <p>
+                    关键词:
+                    <span>
+                      标签列表标签列表标签列表标签列表标签列表标签列表
+                    </span>
+                  </p>
+                  <div class="cur-status"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- 自定义部分 -->
+          <section class="model2">
+            <div class="schedule-list">
+              <p class="task-num-tips">还需处理{{ filterTask()}}个任务</p>
+              <!-- 添加新事项 -->
+              <div class="add-new" @click="addTask()"></div>
+              <!-- <transition-group name="flip-list" tag="div"> -->
+              <transition-group class="ani-box" name="list-complete" tag="div">
+                <div
+                  v-for="(item,index) in scheduleList"
+                  :key="item.id"
+                  :data-id="item.id"
+                  @click.stop="showDel(index)"
+                  :class="['schedule-item',{'unfinish':item.statusType ===1},{'finished':item.statusType ===2},{'del':item.statusType ===3}]"
+                >
+                  <div class="task-content">
+                    <textarea
+                      v-model="item.text"
+                      id="addCheck"
+                      maxlength="140"
+                      cols="45"
+                      rows="2"
+                    ></textarea>
+                    <div class="fin-status" @click.stop="statusChange(item)">
+                      <div class="circle">
+                        <div class="circle-inner"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <transition name="minHeight">
+                    <div
+                      v-show="curTask === index"
+                      class="task-del"
+                      @click="delTask(index)"
+                    >
+                      <span>移除</span>
+                    </div>
+                  </transition>
+                </div>
+                <!-- taskTips -->
+                <div class="task-info" key="clear">
+                  <!-- 清除所有 -->
+                  <div class="del-all" @click="delTask()"></div>
+                </div>
+              </transition-group>
+            </div>
+          </section>
+        </div>
+      </transition>
+    </div>
+  </body>
+  <!-- <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"
+    integrity="sha512-yAr4fN9WZH6hESbOwoFZGtSgOP+LSZbs/JeoDr02pOX4yUFfI++qC9YwIQXIGffhnzliykJtdWTV/v3PxSz8aw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.14.1/lodash.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script> -->
+  <script src="./ossweb-img/js/lottie.js"></script>
+  <script src="./ossweb-img/js/vue.js"></script>
+  <script>
+    var app = new Vue({
+      el: "#app",
+      data() {
+        return {
+          menu: false,
+          haveUrl: true,
+          lottie: null,
+          inputValue: "",
+          errTips: false,
+          curCard: 0,
+          cardList: [
+            {
+              proptery1: "TDK校验",
+              statusType: 1,
+            },
+            {
+              proptery1: "分享信息校验",
+              statusType: 2,
+            },
+            {
+              proptery1: "数据埋点校验",
+              statusType: 4,
+            },
+            {
+              proptery1: "标签闭合校验",
+              statusType: 3,
+            },
+          ],
+          curTask: -1,
+          scheduleList: [
+            // 状态1、未完成2、完成3、删除4、添加新任务
+            {
+              id: 2,
+              statusType: 1,
+              text: "很长很长很长很长很长很长很长很长很长很长的文本",
+            },
+            {
+              id: 3,
+              statusType: 1,
+              text: "很长很长很长很长很长很长很长很长很长很长的文本",
+            },
+            {
+              id: 0,
+              statusType: 2,
+              text: "很长很长很长很长很长很长很长很长很长很长的文本",
+            },
+            {
+              id: 1,
+              statusType: 3,
+              text: "很长很长很长很长很长很长很长很长很长很长的文本",
+            },
+          ],
+        };
+      },
+      mounted() {
+        this.initAni();
+        this.sortList();
+      },
+      methods: {
+        openMenu() {
+          this.menu = !this.menu;
+        },
+        clearInput() {
+          this.haveUrl = false;
+          this.errTips = false;
+          this.lottie.setSpeed(1);
+          this.inputValue = "";
+        },
+        inputCheck() {
+          if (this.inputValue) {
+            this.haveUrl = true;
+            this.errTips = false;
+            this.lottie.setSpeed(6);
+            setTimeout(() => {
+              this.lottie.setSpeed(1);
+            }, 3000);
+          } else {
+            this.errTips = true;
+          }
+        },
+        // 排序方法
+        sortList() {
+          console.log("状态改变", this.curTask);
+          this.scheduleList = _.sortBy(this.scheduleList, "statusType");
+          this.curTask = -1;
+        },
+        addTask() {
+          // 插入队首
+          this.scheduleList.unshift({
+            id: this.scheduleList.length,
+            statusType: 1,
+            text: "",
+          });
+        },
+        showDel(index) {
+          if (index === this.curTask) {
+            this.curTask = -1;
+          } else {
+            this.curTask = index;
+          }
+        },
+        // 任务状态改变
+        statusChange(item) {
+          if (item.statusType === 3) {
+            item.statusType = 1;
+            this.scheduleList.splice(this.scheduleList.indexOf(item), 1);
+            this.scheduleList.unshift(item);
+          } else {
+            item.statusType++;
+          }
+          this.$nextTick(() => {
+            this.sortList();
+          });
+        },
+        filterTask() {
+          return this.scheduleList.filter((item) => {
+            return item.statusType === 1 && item.text !== "";
+          }).length;
+        },
+        //清除任务
+        delTask(id) {
+          console.log(id);
+          if (id === 0 || id) {
+            this.scheduleList.splice(id, 1);
+          } else {
+            if (confirm("确定要清除所有记录吗？")) {
+              this.scheduleList = [];
+            }
+          }
+        },
+        showCard(id) {
+          this.curCard = id;
+        },
+        initAni() {
+          var dom = document.querySelector(".show-ani");
+          this.lottie = lottie.loadAnimation({
+            container: dom, // the dom element that will contain the animation
+            renderer: "canvas",
+            loop: true,
+            autoplay: true,
+            path: "./ossweb-img/data1.json", // the path to the animation json
+          });
+        },
+      },
+    });
+  </script>
+</html>
