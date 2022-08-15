@@ -26,7 +26,7 @@
   .menu-box {
     width: 100%;
     height: 0;
-    transition: height ease-in-out 0.8s;
+    transition: height ease-in-out 0.5s;
     background-color: rgba(0, 0, 0, 0.9);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -43,12 +43,22 @@
     margin: 0 auto;
   }
   .menu-box li {
-    width: 100%;
+    /* width: 100%; */
     height: 0.5rem;
     border-bottom: 1px solid #424245;
   }
   .open-menu .menu-box {
     height: 100vh;
+    width: 100vw;
+  }
+  .menu-set {
+    color: white;
+    font-size: 0.18rem;
+    display: flex;
+    justify-content: space-between;
+    width: 70%;
+    margin: 0 auto;
+    align-items: center;
   }
   .menu-ani {
     animation: setting 1s ease-in-out 1;
@@ -318,10 +328,11 @@
     background: url(../tips-clear.png) no-repeat center/cover;
   }
 }
-@media screen and (max-width: 1920px) {
+@media (min-width: 900px) and (max-width: 1920px) {
   #app {
     max-width: 750px;
     margin: 0 auto;
+    overflow: hidden;
   }
   .show-ani {
     height: 300px;
@@ -331,10 +342,13 @@
 }
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s;
+  transition: all 0.5s;
+  height: 178px;
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
+  height: 0;
+  margin-top: 0;
 }
 .minHeight-enter-active,
 .minHeight-leave-active {
@@ -391,6 +405,24 @@
     transform: rotate(0deg);
   }
   100% {
-    transform: rotate(360deg);
+    transform: rotate(180deg);
   }
+}
+/* 可以设置不同的进入和离开动画 */
+/* 设置持续时间和动画函数 */
+.slide-fade-enter-active {
+  transition: all 0.2s ease;
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter 
+/* .slide-fade-leave-active for below version 2.1.8 */ {
+  transform: translateX(31px);
+  opacity: 0;
+}
+.slide-fade-leave-to
+/* .slide-fade-leave-active for below version 2.1.8 */ {
+  transform: translateX(-31px);
+  opacity: 0;
 }

@@ -29,13 +29,15 @@
         <!-- 菜单 -->
         <div class="menu-box">
           <ul>
-            <li>
-              <div class="set-prop"></div>
-              <div class="switch"></div>
+            <li class="menu-set" v-for="(item,index) in cardList" :key="index">
+              <div class="set-prop">{{item.proptery1}}</div>
+              <div class="show-status" @click="item.show = !item.show">
+                <transition name="slide-fade" mode="out-in">
+                  <div v-if="item.show" class="switch" key="open">开</div>
+                  <div v-else class="switch" key="close">关</div>
+                </transition>
+              </div>
             </li>
-            <li></li>
-            <li></li>
-            <li></li>
           </ul>
         </div>
       </header>
@@ -58,16 +60,17 @@
       </div>
       <!-- 开始校验 -->
       <transition name="fade">
-        <div v-show="haveUrl" class="checking">
-          <!-- 后台校验部分 -->
-          <section class="model1">
-            <!-- head -->
-            <div
-              class="card-box"
-              @click="showCard(0)"
-              v-for="(item,index) in cardList"
-              :key="index"
-            >
+        <!-- 后台校验部分 -->
+        <section v-show="haveUrl" class="model1 checking">
+          <!-- head -->
+          <div
+            class="card-box"
+            @click="showCard(0)"
+            v-for="(item,index) in cardList"
+            v-show="item.show"
+            :key="index"
+          >
+            <template v-if="item.show">
               <div class="card-up">
                 <div class="check-prop">
                   <p>{{index + 1}}、{{item.proptery1}}</p>
@@ -106,57 +109,59 @@
                   <div class="cur-status"></div>
                 </div>
               </div>
-            </div>
-          </section>
-          <!-- 自定义部分 -->
-          <section class="model2">
-            <div class="schedule-list">
-              <p class="task-num-tips">还需处理{{ filterTask()}}个任务</p>
-              <!-- 添加新事项 -->
-              <div class="add-new" @click="addTask()"></div>
-              <!-- <transition-group name="flip-list" tag="div"> -->
-              <transition-group class="ani-box" name="list-complete" tag="div">
-                <div
-                  v-for="(item,index) in scheduleList"
-                  :key="item.id"
-                  :data-id="item.id"
-                  @click.stop="showDel(index)"
-                  :class="['schedule-item',{'unfinish':item.statusType ===1},{'finished':item.statusType ===2},{'del':item.statusType ===3}]"
-                >
-                  <div class="task-content">
-                    <textarea
-                      v-model="item.text"
-                      id="addCheck"
-                      maxlength="140"
-                      cols="45"
-                      rows="2"
-                    ></textarea>
-                    <div class="fin-status" @click.stop="statusChange(item)">
-                      <div class="circle">
-                        <div class="circle-inner"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <transition name="minHeight">
-                    <div
-                      v-show="curTask === index"
-                      class="task-del"
-                      @click="delTask(index)"
-                    >
-                      <span>移除</span>
-                    </div>
-                  </transition>
-                </div>
-                <!-- taskTips -->
-                <div class="task-info" key="clear">
-                  <!-- 清除所有 -->
-                  <div class="del-all" @click="delTask()"></div>
-                </div>
-              </transition-group>
-            </div>
-          </section>
-        </div>
+            </template>
+          </div>
+        </section>
       </transition>
+
+      <!-- 自定义部分 -->
+      <section class="model2 checking">
+        <div class="schedule-list">
+          <p class="task-num-tips">还需处理{{ filterTask()}}个任务</p>
+          <!-- 添加新事项 -->
+          <div class="add-new" @click="addTask()"></div>
+          <!-- <transition-group name="flip-list" tag="div"> -->
+          <transition-group class="ani-box" name="list-complete" tag="div">
+            <div
+              v-for="(item,index) in scheduleList"
+              :key="item.id"
+              :data-id="item.id"
+              @click.stop="showDel(index)"
+              :class="['schedule-item',{'unfinish':item.statusType ===1},{'finished':item.statusType ===2},{'del':item.statusType ===3}]"
+            >
+              <div class="task-content">
+                <textarea
+                  v-model="item.text"
+                  id="addCheck"
+                  maxlength="140"
+                  :disabled="item.statusType === 3"
+                  cols="45"
+                  rows="2"
+                ></textarea>
+                <div class="fin-status" @click.stop="statusChange(item)">
+                  <div class="circle">
+                    <div class="circle-inner"></div>
+                  </div>
+                </div>
+              </div>
+              <transition name="minHeight">
+                <div
+                  v-show="curTask === index"
+                  class="task-del"
+                  @click="delTask(index)"
+                >
+                  <span>移除</span>
+                </div>
+              </transition>
+            </div>
+            <!-- taskTips -->
+            <div class="task-info" key="clear">
+              <!-- 清除所有 -->
+              <div class="del-all" @click="delTask()"></div>
+            </div>
+          </transition-group>
+        </div>
+      </section>
     </div>
   </body>
   <!-- <script
@@ -182,18 +187,22 @@
           curCard: 0,
           cardList: [
             {
+              show: false,
               proptery1: "TDK校验",
               statusType: 1,
             },
             {
+              show: true,
               proptery1: "分享信息校验",
               statusType: 2,
             },
             {
+              show: true,
               proptery1: "数据埋点校验",
               statusType: 4,
             },
             {
+              show: true,
               proptery1: "标签闭合校验",
               statusType: 3,
             },
@@ -252,7 +261,7 @@
         },
         // 排序方法
         sortList() {
-          console.log("状态改变", this.curTask);
+          // console.log("状态改变", this.curTask);
           this.scheduleList = _.sortBy(this.scheduleList, "statusType");
           this.curTask = -1;
         },
